@@ -62,7 +62,7 @@ elsoc <- elsoc_wide_2016_2023 %>% dplyr::select(
     -contains("d03"),
     -contains("d04")
   ) %>% mutate(
-    across(everything(), ~ if_else(. %in% c(-999, -888, -777, -666, -Inf), NA, .))
+    across(everything(), ~ if_else(. %in% c(-999, -888, -777, -666, -Inf, Inf), NA, .))
   )
 
 # 4. Save data ------------------------------------------------------------
