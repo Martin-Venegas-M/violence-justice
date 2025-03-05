@@ -1,9 +1,7 @@
 ---
 title: |
   ![](../input/images/logo_coes.png){width=25% height=25%}  
-  RI-CLPM Model: SDO & Trust in Trade Unions
-
-subtitle: "Justice and violence"
+  RI-CLPM Model: Justice and violence
 author: 
   - Researcher
 date: "`r format(Sys.Date(), '%d/%m/%Y')`"
@@ -53,26 +51,15 @@ pacman::p_load(tidyverse,
                parallel) # librerias
 ```
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(
-  comment = NA,
-  prompt = FALSE,
-  cache = FALSE,
-  echo = FALSE,
-  results = 'asis',
-  message = F,
-  warning = F
-)
-```
 
 ```{r}
 # Load data
-elsoc <- readRDS("../input/data/proc_elsoc.RDS")
+elsoc <- readRDS("input/data/proc_elsoc.RDS")
 ```
 
 ```{r}
 # Load functions
-source("../processing/functions.R", encoding = "UTF-8")
+source("processing/functions_v2.R", encoding = "UTF-8")
 ```
 
 # Introduction
@@ -91,15 +78,16 @@ cl <-
 
 fit <- parLapply(cl, models, function(model) {
   
-  elsoc <- readRDS("../input/data/proc_elsoc.RDS") # load data
-  source("../processing/functions.R", encoding = "UTF-8") # load function for text object
+  elsoc <- readRDS("input/data/proc_elsoc.RDS") # load data
+  source("processing/functions_v2.R", encoding = "UTF-8") # load function for text object
   text_object <- # create text object
     create.text.object(
       "brecha_perc",
-      "f05_03"
+      "f05_06",
+      c(1:7)
     )
   list2env(text_object, envir = globalenv()) # transfer list elements to global environment
-  lavaan::lavaan( # estimate model
+  lavaan::sem( # estimate model
     model = c(bwcomp, get(model), varcov),
     data = elsoc,
     estimator = "MLR",
@@ -199,10 +187,9 @@ comp2 <- comp2 %>% mutate(
 # Analysis
 ## Fit measures
 
-
 ```{r fit}
 kableExtra::kable(gofdt, digits = 3,
-                  caption = "Fit measueres for RI-CLPM models between SDO & Trust in Trade Unions") %>%   kableExtra::kable_styling(
+                  caption = "Fit measueres for RI-CLPM models between justice and violence") %>%   kableExtra::kable_styling(
                     bootstrap_options = c("striped", "hover", "condensed", "responsive"),
                     full_width = T
                   )
@@ -324,6 +311,6 @@ At the Table \@ref(tab:w2) estimates of the crosslagged regressions are showed f
 # Synthesis
 
 ```{r}
-save.image(file='../../input/other/executed_models.RData')
+save.image(file='input/other/executed_models.RData')
 ```
 
