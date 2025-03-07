@@ -17,6 +17,10 @@ output:
     
 linkcolor: black
 urlcolor: blue
+execute:
+  echo: false
+  warning: false
+
 ---
 
 <style type="text/css">
@@ -82,9 +86,11 @@ fit <- parLapply(cl, models, function(model) {
   source("processing/functions_v2.R", encoding = "UTF-8") # load function for text object
   text_object <- # create text object
     create.text.object(
-      "brecha_perc",
+      "d02_02",
       "f05_06",
-      c(1:7)
+      c(1:4, 6:7)
+      # ,"m0_sexo_w01",
+      # "m0_edad_w01"
     )
   list2env(text_object, envir = globalenv()) # transfer list elements to global environment
   lavaan::sem( # estimate model
@@ -187,7 +193,8 @@ comp2 <- comp2 %>% mutate(
 # Analysis
 ## Fit measures
 
-```{r fit}
+```{r}
+#| label: tbl-fit
 kableExtra::kable(gofdt, digits = 3,
                   caption = "Fit measueres for RI-CLPM models between justice and violence") %>%   kableExtra::kable_styling(
                     bootstrap_options = c("striped", "hover", "condensed", "responsive"),
@@ -195,9 +202,10 @@ kableExtra::kable(gofdt, digits = 3,
                   )
 ```
 
-At the Table \@ref(tab:fit) fit measures of all calculated models are showed. In general, all models shows good fit measures, being CFI > 0.9.
+At the Table @tbl-fit fit measures of all calculated models are showed. In general, all models shows good fit measures, being CFI > 0.9.
 
-```{r fit-comp}
+```{r}
+#| label: tbl-fitcomp
 kableExtra::kable(comp1, digits = 3,
                   caption = "Comparison of fit measures (between unconstrained and constrained models)") %>% kableExtra::kable_styling(
                     bootstrap_options = c("striped", "hover", "condensed", "responsive"),
@@ -206,9 +214,10 @@ kableExtra::kable(comp1, digits = 3,
 
 ```
 
-At the Table \@ref(tab:fit-comp) fit measures of unconstrained and constrained models are showed. Following Rutkowski & Svetina (2014) and Chen (2007) all differences suggest that unconstrained models should be retained (ΔCFI < 0.02, ΔRMSEA < 0.03).
+At the Table  @tbl-fitcomp fit measures of unconstrained and constrained models are showed. Following Rutkowski & Svetina (2014) and Chen (2007) all differences suggest that unconstrained models should be retained (ΔCFI < 0.02, ΔRMSEA < 0.03).
 
 ```{r fit-comp2}
+#| label: tbl-fitcomp2
 kable(comp2, digits = 3,
       caption = "Comparison of fit measures between (models A-D)") %>% kableExtra::kable_styling(
         bootstrap_options = c("striped", "hover", "condensed", "responsive"),
@@ -216,11 +225,13 @@ kable(comp2, digits = 3,
       )
 ```
 
-At the Table \@ref(tab:fit-comp2) comparisson between models are showed. Following Rutkowski & Svetina (2014) and Chen (2007), al comparisson meet model invarance (ΔCFI < 0.02, ΔRMSEA < 0.03). Therefore, the most parsimonious models can be retained (d2).
+At the Table @tbl-fitcomp2 comparisson between models are showed. Following Rutkowski & Svetina (2014) and Chen (2007), al comparisson meet model invarance (ΔCFI < 0.02, ΔRMSEA < 0.03). Therefore, the most parsimonious models can be retained (d2).
 
 ## Interpretations
 
 ```{r bw1}
+# label: tbl-bw1
+
 param_d1 <- data.table(parameterEstimates(fit[["d1"]]))
 
 param_d1_bw <-
@@ -239,13 +250,15 @@ kable(param_d1_bw, digits = 3,
   ) # Añadir destacado
 ```
 
-At the Table \@ref(tab:bw1), estimates for the random intercepts of unconstrained models are showed. Both random intercepts have significant variance. This implies that there are stable differences between individuals with respect to their expected scores in trust in trade unions and social dominance orientation[^1].
+At the Table @tbl-bw1, estimates for the random intercepts of unconstrained models are showed. Both random intercepts have significant variance. This implies that there are stable differences between individuals with respect to their expected scores in X and Y[^1].
 
-Also, there is a correlation between random intercepts of both variables. This implies that people who trust more in trust unions, tends to have less orientations to social domination.
+Also, there is a correlation between random intercepts of both variables. This implies that people who X, tends to have less/more Y.
 
 [^1]: If the variance were not different from 0, it would mean that there are very few stable differences between units and that each individual fluctuates around the same grand mean over time.
 
-```{r w1}
+```{r}
+#| label: tbl-w1
+
 param_d1_regs <- param_d1[op == "~",!"label"]
 
 kable(param_d1_regs,
@@ -263,9 +276,11 @@ kable(param_d1_regs,
   ) # Añadir destacado
 ```
 
-At the Table \@ref(tab:w1) estimates of the crosslagged regressions are showed for the unconstrained models. The analysis reveals a negative effect between SDO and trust in trade unions at waves 4, 3 and 1. In details, a deviation of one point above the average level of trust in trade unions at wave 3 predicts a deviation of `r round(param_d1$est[param_d1$lhs == "dep4" & param_d1$rhs == "indep3"],3)` in SDO during wave 4, controlling for deviations from the expected score in SDO. Between wave 2 and 3 de effect is similar, with a coefficient of `r round(param_d1$est[param_d1$lhs == "dep3" & param_d1$rhs == "indep2"],3)`.
+At the Table @tbl-w1 estimates of the crosslagged regressions are showed for the unconstrained models. The analysis reveals a positive/negative effect between X and Y at waves Z. In details, a deviation of one point above the average level of X at wave Z predicts a deviation of `r round(param_d1$est[param_d1$lhs == "dep4" & param_d1$rhs == "indep3"],3)` in Y during wave Z+1, controlling for deviations from the expected score in Y.
 
-```{r bw2}
+```{r}
+#| label: tbl-bw2
+
 param_d2 <- data.table(parameterEstimates(fit[["d2"]]))
 
 param_d2_bw <- param_d2[op == "~~" &
@@ -284,11 +299,13 @@ kable(param_d2_bw, digits = 3,
   ) # Añadir destacado
 ```
 
-At the Table \@ref(tab:bw2) estimates for the random intercepts of constrained models are showed. Both random intercepts have significant variance. This implies that there are stable differences between individuals with respect to their expected scores in trust in trade unions and social dominance orientation.
+At the Table @tbl-bw2 estimates for the random intercepts of constrained models are showed. Both random intercepts have significant variance. This implies that there are stable differences between individuals with respect to their expected scores in X and Y.
 
 Correlation between random intercepts also can be found in the d2 model.
 
-```{r w2}
+```{r}
+#| label: tbl-w2
+
 param_d2_regs <- param_d2[op == "~",!"label"]
 
 kable(param_d2_regs,
@@ -306,7 +323,7 @@ kable(param_d2_regs,
   )
 ```
 
-At the Table \@ref(tab:w2) estimates of the crosslagged regressions are showed for the constrained models. It is observed that a deviation of one point above the average level of trust in trade unions predicts a deviation of `r round(param_d2$est[param_d2$lhs == "dep4" & param_d1$rhs == "indep3"],3)` in SDO during the next measurement, controlling for deviations from the expected score in SDO .
+At the Table @tbl-w2 estimates of the crosslagged regressions are showed for the constrained models. It is observed that a deviation of one point above the average level of X predicts a deviation of `r round(param_d2$est[param_d2$lhs == "dep4" & param_d1$rhs == "indep3"],3)` in Y during the next measurement, controlling for deviations from the expected score in Y.
 
 # Synthesis
 

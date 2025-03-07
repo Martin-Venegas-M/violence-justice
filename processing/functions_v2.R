@@ -132,3 +132,39 @@ gof.comp <- function(data,
   comp <- data.table(comp = names(comp), dplyr::bind_rows(comp))
   return(comp)
 }
+
+  # b1 <- paste(
+  #   paste0("dep", wmf, " ~ dep", wml, " + indep", wml, " + ", sex, " + ", edad, collapse = "\n"),
+  #   paste0("indep", wmf, " ~ indep", wml, collapse = "\n"),
+  #   sep = "\n"
+  # )
+
+  # b2 <- paste(
+  #   paste0("dep", wmf, " ~ a*dep", wml, " + b*indep", wml, " + sx*", sex, " + ed*", edad, collapse = "\n"),
+  #   paste0("indep", wmf, " ~ d*indep", wml, collapse = "\n"),
+  #   sep = "\n"
+  # )
+
+  # c1 <- paste(
+  #   paste0("dep", wmf, " ~ dep", wml, collapse = "\n"),
+  #   paste0("indep", wmf, " ~ dep", wml, " + indep", wml, " + ", sex, " + ", edad, collapse = "\n"),
+  #   sep = "\n"
+  # )
+
+  # c2 <- paste(
+  #   paste0("dep", wmf, " ~ a*dep", wml, collapse = "\n"),
+  #   paste0("indep", wmf, " ~ c*dep", wml, " + d*indep", wml, " + sx*", sex, " + ed*", edad, collapse = "\n"),
+  #   sep = "\n"
+  # )
+
+  # d1 <- paste(
+  #   paste0("dep", wmf, " ~ dep", wml, " + indep", wml, " + ", sex, " + ", edad, collapse = "\n"),
+  #   paste0("indep", wmf, " ~ dep", wml, " + indep", wml, " + ", sex, " + ", edad, collapse = "\n"),
+  #   sep = "\n"
+  # )
+
+  # d2 <- paste(
+  #   paste0("dep", wmf, " ~ a*dep", wml, " + b*indep", wml, " + sx*", sex, " + ed*", edad, collapse = "\n"),
+  #   paste0("indep", wmf, " ~ c*dep", wml, " + d*indep", wml, " + sx*", sex, " + ed*", edad, collapse = "\n"),
+  #   sep = "\n"
+  # )
