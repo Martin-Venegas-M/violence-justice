@@ -34,6 +34,7 @@ elsoc <- elsoc_wide_2016_2023 %>% dplyr::select(
   contains("f05_"),
   contains("f06_"),
   contains("t06_01"),
+  contains("t09"),
   contains("d03_01"),
   contains("d03_02"),
   contains("d04_01"),

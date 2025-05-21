@@ -29,16 +29,19 @@ source("processing/func_sint.R")
 # 3. Estimate RICLPM ------------------------------------------------------
 
 # Function for estimating multiple dependent variables for one dependent variable
-list_fits <- function(x, waves1 = c(1:7), waves2 = c(1:4, 6:7)) {
+list_fits <- function(x, waves1 = c(1:7), waves2 = c(1:4)) {
   fits <- list(
-    fit1 = estimate_riclpm(text_riclpm(x, "f05_01", waves2)), # Info not available for w05
-    fit2 = estimate_riclpm(text_riclpm(x, "f05_02", waves2)), # Info not available for w05
-    fit3 = estimate_riclpm(text_riclpm(x, "f05_03", waves1)),
-    fit4 = estimate_riclpm(text_riclpm(x, "f05_04", waves1)),
-    fit5 = estimate_riclpm(text_riclpm(x, "f05_05", waves2)), # Info not available for w05
-    fit6 = estimate_riclpm(text_riclpm(x, "f05_06", waves1)),
-    fit7 = estimate_riclpm(text_riclpm(x, "f05_07", waves1)),
-    fit8 = estimate_riclpm(text_riclpm(x, "t06_01", c(1:4, 6))) # Info not available for w05 and w07
+    fit1 = estimate_riclpm(text_riclpm_v2(x, "f05_01", waves2, inv_preds = NULL, constrain = FALSE)), # Info not available for w05
+    fit2 = estimate_riclpm(text_riclpm_v2(x, "f05_02", waves2, inv_preds = NULL, constrain = FALSE)), # Info not available for w05
+    fit3 = estimate_riclpm(text_riclpm_v2(x, "f05_03", waves1, inv_preds = NULL, constrain = FALSE)),
+    fit4 = estimate_riclpm(text_riclpm_v2(x, "f05_04", waves1, inv_preds = NULL, constrain = FALSE)),
+    fit5 = estimate_riclpm(text_riclpm_v2(x, "f05_05", waves2, inv_preds = NULL, constrain = FALSE)), # Info not available for w05
+    fit6 = estimate_riclpm(text_riclpm_v2(x, "f05_06", waves1, inv_preds = NULL, constrain = FALSE)),
+    fit7 = estimate_riclpm(text_riclpm_v2(x, "f05_07", waves1, inv_preds = NULL, constrain = FALSE)),
+    fit8 = estimate_riclpm(text_riclpm_v2(x, "t06_01", waves2, inv_preds = NULL, constrain = FALSE)), # Info not available for w05 and w07
+    fit9 = estimate_riclpm(text_riclpm_v2(x, "t09_01", waves1, inv_preds = NULL, constrain = FALSE)),
+    fit10 = estimate_riclpm(text_riclpm_v2(x, "t09_02",waves1, inv_preds = NULL, constrain = FALSE)),
+    fit11 = estimate_riclpm(text_riclpm_v2(x, "t09_03",waves1, inv_preds = NULL, constrain = FALSE))
   )
 
   return(fits)
@@ -47,13 +50,13 @@ list_fits <- function(x, waves1 = c(1:7), waves2 = c(1:4, 6:7)) {
 fits_brecha_perc <- list_fits("brecha_perc")
 fits_brecha_just <- list_fits("brecha_just")
 fits_c18_11 <- list_fits("c18_11")
-fits_d02_01 <- list_fits("d02_01", waves1 = c(1:4, 6:7))
-fits_d02_02 <- list_fits("d02_02", waves1 = c(1:4, 6:7))
-fits_d02_03 <- list_fits("d02_03", waves1 = c(1:4, 6:7))
+fits_d02_01 <- list_fits("d02_01", waves1 = c(1:4))
+fits_d02_02 <- list_fits("d02_02", waves1 = c(1:4))
+fits_d02_03 <- list_fits("d02_03", waves1 = c(1:4))
 
 # 4. Create tabs for RICLPM -----------------------------------------------
 
-vector_vary <- c(paste0("f05_0", rep(1:7)), "t06_01")
+vector_vary <- c(paste0("f05_0", rep(1:7)), "t06_01", paste0("t09_0", rep(1:3)))
 
 tab_brecha_perc <- bind_rows(map2(.x = fits_brecha_perc, .y = vector_vary, .f = ~ reg_sig(.x, "brecha_perc", .y)))
 tab_brecha_just <- bind_rows(map2(.x = fits_brecha_just, .y = vector_vary, .f = ~ reg_sig(.x, "brecha_just", .y)))
