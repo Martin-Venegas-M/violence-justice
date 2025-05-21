@@ -31,6 +31,7 @@ elsoc <- elsoc_wide_2016_2023 %>% dplyr::select(
   starts_with("m0_edad"),
   starts_with("m0_sexo"),
   starts_with("m01_"),
+  starts_with("c15"),
   contains("f05_"),
   contains("f06_"),
   contains("t06_01"),
@@ -63,7 +64,8 @@ elsoc <- elsoc_wide_2016_2023 %>% dplyr::select(
     -contains("d03"),
     -contains("d04")
   ) %>% mutate(
-    across(everything(), ~ if_else(. %in% c(-999, -888, -777, -666, -Inf, Inf), NA, .))
+    across(everything(), ~ if_else(. %in% c(-999, -888, -777, -666, -Inf, Inf), NA, .)),
+    across(c(paste0("c15_w0", rep(1:7))), ~ if_else(. %in% c(11, 12), NA, .))
   )
 
 # 4. Save data ------------------------------------------------------------
