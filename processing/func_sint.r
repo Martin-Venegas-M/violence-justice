@@ -153,13 +153,14 @@ reg_sig <- function(fit, x, y) {
 # print(tab_sig)
 
 # Function for estimating RICLPM Model. It assumes data as "elsoc". ------------------------------------
-estimate_riclpm <- function(text_object) {
+estimate_riclpm <- function(text_object, g = NULL) {
   sem(
     text_object,
     data = elsoc,
     estimator = "MLR",
     missing = "FIML",
     meanstructure = T,
-    int.ov.free = T
+    int.ov.free = T,
+    group = g
   )
 }

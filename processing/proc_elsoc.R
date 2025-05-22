@@ -8,6 +8,8 @@
 # Executive Summary: This script contains the code to create the database needed to elaborate the analyses on Justice and Violence
 # Date: January 28, 2025
 
+rm(list = ls())
+
 # 1. Load packages --------------------------------------------------------
 
 if (!require("pacman")) install.packages("pacman")  #if pacman es missing, install
@@ -65,6 +67,12 @@ elsoc <- elsoc_wide_2016_2023 %>% dplyr::select(
     -contains("d04")
   ) %>% mutate(
     across(everything(), ~ if_else(. %in% c(-999, -888, -777, -666, -Inf, Inf), NA, .)),
+        ideol = case_when(
+      c15_w01 %in% c(0:3) ~ 1, # Izquierda
+      c15_w01 %in% c(4:6) ~ 2, # Centro
+      c15_w01 %in% c(7:10) ~ 3, # Derecho
+      c15_w01 %in% c(11, 12) ~ 4 # Ninguno Ns/NR
+    ),
     across(c(paste0("c15_w0", rep(1:7))), ~ if_else(. %in% c(11, 12), NA, .))
   )
 
