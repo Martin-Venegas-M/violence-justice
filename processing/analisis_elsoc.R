@@ -111,6 +111,7 @@ cor.test(elsoc$brecha_perc_w07, elsoc$c18_11_w07)
 # 7. Test moderations ----------------------------------------------------
 
 # writeLines(text_riclpm_v2("brecha_perc", "f05_04", c(1:7), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE))
+#* COMMENT: I have to try this manually because to the date, the function doesn't consider constraining by groups.
 
 # 7.1 Moderación con cuatro grupos (brecha_perc) ---------------------------------------
 text_moderation4 <- "
@@ -175,7 +176,7 @@ RI_y ~~ 0*cy1
 "
 fit_moderation4 <- estimate_riclpm(text_moderation4, g = "ideol4")
 summary(fit_moderation4, fit.measures = TRUE)
-#! OJO! Con cuatro grupos se pierde el efecto. Probar otros grupos.
+# ! OJO! Con cuatro grupos se pierde el efecto. Probar otros grupos.
 
 # 7.2 Moderación con dos grupos (brecha_perc) ------------------------------------------
 text_moderation2 <- "
@@ -240,8 +241,9 @@ RI_y ~~ 0*cy1
 "
 fit_moderation2 <- estimate_riclpm(text_moderation2, g = "ideol2")
 summary(fit_moderation2, fit.measures = TRUE)
+# ! TAMPOCO HAY EFECTO
 
-# 7.3 Moderación con cuatro grupos (c18_11) ---------------------------------------
+# 7.3 Moderación con cuatro grupos (c18_11) --------------------------------------------
 text_moderation4_v2 <- "
 
 RI_x =~ 1*c18_11_w01 + 1*c18_11_w02 + 1*c18_11_w03 + 1*c18_11_w04 + 1*c18_11_w05 + 1*c18_11_w06 + 1*c18_11_w07
@@ -304,8 +306,9 @@ RI_y ~~ 0*cy1
 "
 fit_moderation4_v2 <- estimate_riclpm(text_moderation4_v2, g = "ideol4")
 summary(fit_moderation4_v2, fit.measures = TRUE)
+# ! HAY EFECTO, PERO EL CFI ESTÁ BAJO EL UMBRAL ACEPTABLE.
 
-# 7.4 Moderación con dos grupos (c18_11) ---------------------------------------
+# 7.4 Moderación con dos grupos (c18_11) -----------------------------------------------
 
 writeLines(text_riclpm_v2("c18_11", "f05_04", c(1:7), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE))
 
@@ -372,3 +375,4 @@ RI_y ~~ 0*cy1
 "
 fit_moderation2_v2 <- estimate_riclpm(text_moderation2_v2, g = "ideol2")
 summary(fit_moderation2_v2, fit.measures = TRUE)
+# ! HAY EFECTO!
