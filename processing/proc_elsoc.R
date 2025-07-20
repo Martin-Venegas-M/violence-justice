@@ -5,7 +5,7 @@
 # Responsable: Researcher
 
 # Executive Summary: This script contains the code to create the database needed to elaborate the analyses on Justice and Violence
-# Date: January 28, 2025
+# Date: July 20, 2025
 
 rm(list = ls())
 
@@ -69,6 +69,7 @@ elsoc <- elsoc_wide_2016_2023 %>%
   ) %>%
   mutate(
     across(everything(), ~ if_else(. %in% c(-999, -888, -777, -666, -Inf, Inf), NA, .)),
+    # Create possible moderators
     ideol4 = case_when(
       c15_w01 %in% c(0:3) ~ 1, # Izquierda
       c15_w01 %in% c(4:6) ~ 2, # Centro

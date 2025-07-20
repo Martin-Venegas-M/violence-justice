@@ -1,11 +1,11 @@
 # 0. Identification -------------------------------------------------------
 
-# Title: Analysis code for a research paper on Justice and violence
+# Title: Exploratory analysis code for a research paper on Justice and violence
 # Institution: Centro de Estudios de Conflicto y Cohesión Social (COES)
 # Responsable: Researcher
 
-# Executive Summary: This script contains the code to create the analysis code for Justice and Violence
-# Date: January 30, 2025
+# Executive Summary: This script contains the code to create the exploratyory analysis for Justice and Violence article
+# Date: July 20, 2025
 
 rm(list = ls())
 
@@ -24,21 +24,23 @@ pacman::p_load(
 # 2. Load data and functions ----------------------------------------------
 
 elsoc <- readRDS("input/data/proc_elsoc.RDS")
-source("processing/func_sint.R")
+source("processing/helpers/func_sint.R") # functions for exploratory analysis
 
 # 3. Estimate RICLPM ------------------------------------------------------
 
 # Function for estimating multiple dependent variables for one dependent variable
+# ! IMPORTANT: This functions consider two waves paramteres because there are some models to try where the dependent variable is not present in all waves
+
 list_fits <- function(x, waves1 = c(1:7), waves2 = c(1:4)) {
   fits <- list(
-    fit1 = estimate_riclpm(text_riclpm_v2(x, "f05_01", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # Info not available for w05
-    fit2 = estimate_riclpm(text_riclpm_v2(x, "f05_02", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # Info not available for w05
+    fit1 = estimate_riclpm(text_riclpm_v2(x, "f05_01", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # ! Info not available for w05
+    fit2 = estimate_riclpm(text_riclpm_v2(x, "f05_02", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # ! Info not available for w05
     fit3 = estimate_riclpm(text_riclpm_v2(x, "f05_03", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
     fit4 = estimate_riclpm(text_riclpm_v2(x, "f05_04", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
-    fit5 = estimate_riclpm(text_riclpm_v2(x, "f05_05", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # Info not available for w05
+    fit5 = estimate_riclpm(text_riclpm_v2(x, "f05_05", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # ! Info not available for w05
     fit6 = estimate_riclpm(text_riclpm_v2(x, "f05_06", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
     fit7 = estimate_riclpm(text_riclpm_v2(x, "f05_07", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
-    fit8 = estimate_riclpm(text_riclpm_v2(x, "t06_01", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # Info not available for w05 and w07
+    fit8 = estimate_riclpm(text_riclpm_v2(x, "t06_01", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # ! Info not available for w05 and w07
     fit9 = estimate_riclpm(text_riclpm_v2(x, "t09_01", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
     fit10 = estimate_riclpm(text_riclpm_v2(x, "t09_02", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
     fit11 = estimate_riclpm(text_riclpm_v2(x, "t09_03", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE))
@@ -47,12 +49,13 @@ list_fits <- function(x, waves1 = c(1:7), waves2 = c(1:4)) {
   return(fits)
 }
 
+# Estimate models
 fits_brecha_perc <- list_fits("brecha_perc")
 fits_brecha_just <- list_fits("brecha_just")
 fits_c18_11 <- list_fits("c18_11")
-fits_d02_01 <- list_fits("d02_01", waves1 = c(1:4))
-fits_d02_02 <- list_fits("d02_02", waves1 = c(1:4))
-fits_d02_03 <- list_fits("d02_03", waves1 = c(1:4))
+fits_d02_01 <- list_fits("d02_01", waves1 = c(1:4)) # ! In this case, the independent variable is only en the firts 4 waves
+fits_d02_02 <- list_fits("d02_02", waves1 = c(1:4)) # ! In this case, the independent variable is only en the firts 4 waves
+fits_d02_03 <- list_fits("d02_03", waves1 = c(1:4)) # ! In this case, the independent variable is only en the firts 4 waves
 
 # 4. Create tabs for RICLPM -----------------------------------------------
 
@@ -75,6 +78,9 @@ write_xlsx(list(
   "JUSTICIA EDUCACION" = tab_d02_02,
   "JUSTICIA SALUD" = tab_d02_03
 ), "output/riclpm_violencie_justice_controls_constrained.xlsx")
+
+#* REPODUCIBITY NOTE: Currently I'am saving "riclpm_violence_controls_contrained.xlsx" file. The file that I save is linked to the parameters I set in the
+#* estimate_riclpm() functions inside the list_fits() function. If you want to reproduce the other files in the output folder, you have to change these parameters.
 
 # 6. Test specific models ------------------------------------------------
 
