@@ -42,17 +42,19 @@ h4.date { /* Header 4 - and the author and data headers use this too  */
 ```{r include=FALSE}
 ## Load packages
 
-if (!require("pacman"))
-  install.packages("pacman")  #si falta pacman, instalar
+if (!require("pacman")) {
+    install.packages("pacman")
+} # si falta pacman, instalar
 
-pacman::p_load(tidyverse,
-               data.table,
-               sjmisc,
-               knitr,
-               lavaan,
-               kableExtra,
-               effectsize,
-               parallel) # librerias
+pacman::p_load(
+    tidyverse,
+    data.table,
+    sjmisc,
+    knitr,
+    lavaan,
+    kableExtra,
+    effectsize
+) # librerias
 ```
 
 
@@ -63,7 +65,9 @@ elsoc <- readRDS("input/data/proc_elsoc.RDS")
 
 ```{r}
 # Load functions
-source("processing/functions_v2.R", encoding = "UTF-8")
+source("processing/func_sint.R")
+source("processing/functions_v2.R")
+source("specifics.R", encoding = "UTF-8")
 ```
 
 # Introduction
@@ -72,37 +76,11 @@ This document contains the main model for RI-CLPM analysis for article about soc
 
 ```{r}
 
-# 7.1 Estimate models with all cores ------------
+# 7.1 Estimate models ------------
 
 models <- c("a1", "a2", "b1", "b2", "c1", "c2", "d1", "d2") # vector with models names
-
-cl <-
-  makeCluster(detectCores()) # create cluster with all available cores
-
-
-fit <- parLapply(cl, models, function(model) {
-  
-  elsoc <- readRDS("input/data/proc_elsoc.RDS") # load data
-  source("processing/functions_v2.R", encoding = "UTF-8") # load function for text object
-  text_object <- # create text object
-    create.text.object(
-      "d02_02",
-      "f05_06",
-      c(1:4, 6:7)
-      # ,"m0_sexo_w01",
-      # "m0_edad_w01"
-    )
-  list2env(text_object, envir = globalenv()) # transfer list elements to global environment
-  lavaan::sem( # estimate model
-    model = c(bwcomp, get(model), varcov),
-    data = elsoc,
-    estimator = "MLR",
-    missing = "FIML",
-    meanstructure = T,
-    int.ov.free = T
-  )
-})
-stopCluster(cl) # stop the cluster when finished
+fits_text <- list(a1, a2, b1, b2, c1, c2, d1, d2)
+fit <- map(fits_text, ~ estimate_riclpm(c(bwcomp, .x, varcovs)))
 
 # 7.2 Save the GOFs of each model in a list from a for loop. ---------------------
 
@@ -111,83 +89,89 @@ names(fit) <- models
 gofdt <- list() # empty list for fit indexes
 
 for (i in names(fit)) {
-  x <-
-    fitMeasures(fit[[i]])[c(
-      "chisq.scaled",
-      "df.scaled",
-      "pvalue.scaled",
-      "cfi.scaled",
-      "tli.scaled",
-      "rmsea.scaled",
-      "srmr_mplus",
-      "aic",
-      "bic",
-      "bic2",
-      "logl",
-      "npar",
-      "scaling.factor.h0"
-    )]
-  gofdt[[i]] <- setNames(
-    as.numeric(x),
-    c(
-      "X2",
-      "df",
-      "pvalue",
-      "CFI",
-      "TLI",
-      "RMSEA",
-      "SRMR",
-      "AIC",
-      "BIC",
-      "aBIC",
-      "LL",
-      "par",
-      "LLcorrectf"
+    x <-
+        fitMeasures(fit[[i]])[c(
+            "chisq.scaled",
+            "df.scaled",
+            "pvalue.scaled",
+            "cfi.scaled",
+            "tli.scaled",
+            "rmsea.scaled",
+            "srmr_mplus",
+            "aic",
+            "bic",
+            "bic2",
+            "logl",
+            "npar",
+            "scaling.factor.h0"
+        )]
+    gofdt[[i]] <- setNames(
+        as.numeric(x),
+        c(
+            "X2",
+            "df",
+            "pvalue",
+            "CFI",
+            "TLI",
+            "RMSEA",
+            "SRMR",
+            "AIC",
+            "BIC",
+            "aBIC",
+            "LL",
+            "par",
+            "LLcorrectf"
+        )
     )
-  )
 } # Extract gof indexes
 
-gofdt <- data.table(m=names(gofdt),dplyr::bind_rows(gofdt)) # Transfer to datatable format the gof indexes
+gofdt <- data.table(m = names(gofdt), dplyr::bind_rows(gofdt)) # Transfer to datatable format the gof indexes
 
 # 7.3 Add effect size interpretation of principal fit indicators --------------
 
-gofdt <- gofdt %>% mutate(
-  interpret_CFI = effectsize::interpret_cfi(CFI),
-  interpret_RMSEA = effectsize::interpret_rmsea(RMSEA),
-) %>% relocate(interpret_CFI, .after = CFI) %>%
-  relocate(interpret_RMSEA, .after = RMSEA)
+gofdt <- gofdt %>%
+    mutate(
+        interpret_CFI = effectsize::interpret_cfi(CFI),
+        interpret_RMSEA = effectsize::interpret_rmsea(RMSEA),
+    ) %>%
+    relocate(interpret_CFI, .after = CFI) %>%
+    relocate(interpret_RMSEA, .after = RMSEA)
 
 # 7.4 Compare GOF ---------------
 
 ### Test models 1 and 2
 
 comp1 <-
-  gof.comp(data = gofdt, pairs = list(c("a2", "a1"), c("b2", "b1"), c("c2", "c1"), c("d2", "d1")))
+    gof.comp(data = gofdt, pairs = list(c("a2", "a1"), c("b2", "b1"), c("c2", "c1"), c("d2", "d1")))
 
 ### Add interpretation
-comp1 <- comp1 %>% mutate(
-  test_cfi_d = ifelse(CFI_D < 0.02, "meet invariance", "do not meet invariance"),
-  test_rmsea_d = ifelse(RMSEA_D < 0.03, "meet invariance", "do not meet invariance"),
-) %>% relocate(test_cfi_d, .after = CFI_D) %>%
-  relocate(test_rmsea_d, .after = RMSEA_D)
+comp1 <- comp1 %>%
+    mutate(
+        test_cfi_d = ifelse(CFI_D < 0.02, "meet invariance", "do not meet invariance"),
+        test_rmsea_d = ifelse(RMSEA_D < 0.03, "meet invariance", "do not meet invariance"),
+    ) %>%
+    relocate(test_cfi_d, .after = CFI_D) %>%
+    relocate(test_rmsea_d, .after = RMSEA_D)
 
 ### Test models A-D
 
 comp2 <-
-  gof.comp(data = gofdt, pairs = list(
-    c("a2", "b2"),
-    c("a2", "c2"),
-    c("a2", "d2"),
-    c("b2", "d2"),
-    c("c2", "d2")
-  ))
+    gof.comp(data = gofdt, pairs = list(
+        c("a2", "b2"),
+        c("a2", "c2"),
+        c("a2", "d2"),
+        c("b2", "d2"),
+        c("c2", "d2")
+    ))
 
 ### Add interpretation
-comp2 <- comp2 %>% mutate(
-  test_cfi_d = ifelse(CFI_D < 0.02, "meet invariance", "do not meet invariance"),
-  test_rmsea_d = ifelse(RMSEA_D < 0.03, "meet invariance", "do not meet invariance"),
-) %>% relocate(test_cfi_d, .after = CFI_D) %>%
-  relocate(test_rmsea_d, .after = RMSEA_D)
+comp2 <- comp2 %>%
+    mutate(
+        test_cfi_d = ifelse(CFI_D < 0.02, "meet invariance", "do not meet invariance"),
+        test_rmsea_d = ifelse(RMSEA_D < 0.03, "meet invariance", "do not meet invariance"),
+    ) %>%
+    relocate(test_cfi_d, .after = CFI_D) %>%
+    relocate(test_rmsea_d, .after = RMSEA_D)
 ```
 
 # Analysis
@@ -195,22 +179,26 @@ comp2 <- comp2 %>% mutate(
 
 ```{r}
 #| label: tbl-fit
-kableExtra::kable(gofdt, digits = 3,
-                  caption = "Fit measueres for RI-CLPM models between justice and violence") %>%   kableExtra::kable_styling(
-                    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
-                    full_width = T
-                  )
+kableExtra::kable(gofdt,
+    digits = 3,
+    caption = "Fit measueres for RI-CLPM models between justice and violence"
+) %>% kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = T
+)
 ```
 
 At the Table @tbl-fit fit measures of all calculated models are showed. In general, all models shows good fit measures, being CFI > 0.9.
 
 ```{r}
 #| label: tbl-fitcomp
-kableExtra::kable(comp1, digits = 3,
-                  caption = "Comparison of fit measures (between unconstrained and constrained models)") %>% kableExtra::kable_styling(
-                    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
-                    full_width = T
-                  )
+kableExtra::kable(comp1,
+    digits = 3,
+    caption = "Comparison of fit measures (between unconstrained and constrained models)"
+) %>% kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = T
+)
 
 ```
 
@@ -218,11 +206,13 @@ At the Table  @tbl-fitcomp fit measures of unconstrained and constrained models 
 
 ```{r fit-comp2}
 #| label: tbl-fitcomp2
-kable(comp2, digits = 3,
-      caption = "Comparison of fit measures between (models A-D)") %>% kableExtra::kable_styling(
-        bootstrap_options = c("striped", "hover", "condensed", "responsive"),
-        full_width = T
-      )
+kable(comp2,
+    digits = 3,
+    caption = "Comparison of fit measures between (models A-D)"
+) %>% kableExtra::kable_styling(
+    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+    full_width = T
+)
 ```
 
 At the Table @tbl-fitcomp2 comparisson between models are showed. Following Rutkowski & Svetina (2014) and Chen (2007), al comparisson meet model invarance (ΔCFI < 0.02, ΔRMSEA < 0.03). Therefore, the most parsimonious models can be retained (d2).
@@ -235,19 +225,22 @@ At the Table @tbl-fitcomp2 comparisson between models are showed. Following Rutk
 param_d1 <- data.table(parameterEstimates(fit[["d1"]]))
 
 param_d1_bw <-
-  param_d1[op == "~~" & rhs %in% c("RI_x", "RI_y"), !"label"]
+    param_d1[op == "~~" & rhs %in% c("RI_x", "RI_y"), !"label"]
 
-kable(param_d1_bw, digits = 3,
-      caption = "D1 model interpretations of between components") %>% kableExtra::kable_styling(
+kable(param_d1_bw,
+    digits = 3,
+    caption = "D1 model interpretations of between components"
+) %>%
+    kableExtra::kable_styling(
         bootstrap_options = c("striped", "hover", "condensed", "responsive"),
         full_width = T
-      ) %>%
-  row_spec(
-    which(param_d1_bw$pvalue < 0.05),
-    bold = T,
-    color = "white",
-    background = "#9CE599"
-  ) # Añadir destacado
+    ) %>%
+    row_spec(
+        which(param_d1_bw$pvalue < 0.05),
+        bold = T,
+        color = "white",
+        background = "#9CE599"
+    ) # Añadir destacado
 ```
 
 At the Table @tbl-bw1, estimates for the random intercepts of unconstrained models are showed. Both random intercepts have significant variance. This implies that there are stable differences between individuals with respect to their expected scores in X and Y[^1].
@@ -259,21 +252,22 @@ Also, there is a correlation between random intercepts of both variables. This i
 ```{r}
 #| label: tbl-w1
 
-param_d1_regs <- param_d1[op == "~",!"label"]
+param_d1_regs <- param_d1[op == "~", !"label"]
 
 kable(param_d1_regs,
-      digits = 3,
-      caption = "D1 model interpretations of within components") %>%
-  kableExtra::kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
-    full_width = T
-  ) %>%
-  row_spec(
-    which(param_d1_regs$pvalue < 0.05),
-    bold = T,
-    color = "white",
-    background = "#9CE599"
-  ) # Añadir destacado
+    digits = 3,
+    caption = "D1 model interpretations of within components"
+) %>%
+    kableExtra::kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+        full_width = T
+    ) %>%
+    row_spec(
+        which(param_d1_regs$pvalue < 0.05),
+        bold = T,
+        color = "white",
+        background = "#9CE599"
+    ) # Añadir destacado
 ```
 
 At the Table @tbl-w1 estimates of the crosslagged regressions are showed for the unconstrained models. The analysis reveals a positive/negative effect between X and Y at waves Z. In details, a deviation of one point above the average level of X at wave Z predicts a deviation of `r round(param_d1$est[param_d1$lhs == "dep4" & param_d1$rhs == "indep3"],3)` in Y during wave Z+1, controlling for deviations from the expected score in Y.
@@ -284,19 +278,22 @@ At the Table @tbl-w1 estimates of the crosslagged regressions are showed for the
 param_d2 <- data.table(parameterEstimates(fit[["d2"]]))
 
 param_d2_bw <- param_d2[op == "~~" &
-                 rhs %in% c("RI_x", "RI_y"),!"label"]
+    rhs %in% c("RI_x", "RI_y"), !"label"]
 
-kable(param_d2_bw, digits = 3,
-      caption = "D2 model interpretations of between components") %>% kableExtra::kable_styling(
+kable(param_d2_bw,
+    digits = 3,
+    caption = "D2 model interpretations of between components"
+) %>%
+    kableExtra::kable_styling(
         bootstrap_options = c("striped", "hover", "condensed", "responsive"),
         full_width = T
-      ) %>%
-  row_spec(
-    which(param_d2_bw$pvalue < 0.05),
-    bold = T,
-    color = "white",
-    background = "#9CE599"
-  ) # Añadir destacado
+    ) %>%
+    row_spec(
+        which(param_d2_bw$pvalue < 0.05),
+        bold = T,
+        color = "white",
+        background = "#9CE599"
+    ) # Añadir destacado
 ```
 
 At the Table @tbl-bw2 estimates for the random intercepts of constrained models are showed. Both random intercepts have significant variance. This implies that there are stable differences between individuals with respect to their expected scores in X and Y.
@@ -306,28 +303,25 @@ Correlation between random intercepts also can be found in the d2 model.
 ```{r}
 #| label: tbl-w2
 
-param_d2_regs <- param_d2[op == "~",!"label"]
+param_d2_regs <- param_d2[op == "~", !"label"]
 
 kable(param_d2_regs,
-      digits = 3,
-      caption = "D2 model interpretations of within components") %>%
-  kableExtra::kable_styling(
-    bootstrap_options = c("striped", "hover", "condensed", "responsive"),
-    full_width = T
-  ) %>%
-  row_spec(
-    which(param_d2_regs$pvalue < 0.05),
-    bold = T,
-    color = "white",
-    background = "#9CE599"
-  )
+    digits = 3,
+    caption = "D2 model interpretations of within components"
+) %>%
+    kableExtra::kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+        full_width = T
+    ) %>%
+    row_spec(
+        which(param_d2_regs$pvalue < 0.05),
+        bold = T,
+        color = "white",
+        background = "#9CE599"
+    )
 ```
 
 At the Table @tbl-w2 estimates of the crosslagged regressions are showed for the constrained models. It is observed that a deviation of one point above the average level of X predicts a deviation of `r round(param_d2$est[param_d2$lhs == "dep4" & param_d1$rhs == "indep3"],3)` in Y during the next measurement, controlling for deviations from the expected score in Y.
 
 # Synthesis
-
-```{r}
-save.image(file='input/other/executed_models.RData')
-```
 

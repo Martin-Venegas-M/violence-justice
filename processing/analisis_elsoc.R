@@ -306,6 +306,10 @@ fit_moderation4_v2 <- estimate_riclpm(text_moderation4_v2, g = "ideol4")
 summary(fit_moderation4_v2, fit.measures = TRUE)
 
 # 7.4 Moderación con dos grupos (c18_11) ---------------------------------------
+
+writeLines(text_riclpm_v2("c18_11", "f05_04", c(1:7), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE))
+
+
 text_moderation2_v2 <- "
 
 RI_x =~ 1*c18_11_w01 + 1*c18_11_w02 + 1*c18_11_w03 + 1*c18_11_w04 + 1*c18_11_w05 + 1*c18_11_w06 + 1*c18_11_w07
