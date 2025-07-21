@@ -83,6 +83,11 @@ elsoc <- elsoc_wide_2016_2023 %>%
     across(c(paste0("c15_w0", rep(1:7))), ~ if_else(. %in% c(11, 12), NA, .))
   )
 
+elsoc <- elsoc %>% mutate(
+  ideol4 = factor(.$ideol4, levels = c(1:4), labels = c("Izquierda", "Centro", "Derecha", "Ninguno")),
+  ideol2 = factor(.$ideol2, levels = c(0, 1), labels = c("No se posiciona", "Se posiciojna"))
+)
+
 # 4. Save data ------------------------------------------------------------
 
 saveRDS(elsoc, "input/data/proc_elsoc.RDS")

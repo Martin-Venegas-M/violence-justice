@@ -18,7 +18,8 @@ pacman::p_load(
     haven,
     tidylog,
     lavaan,
-    writexl
+    writexl,
+    data.table
 )
 
 # 2. Load data and functions ----------------------------------------------
@@ -29,12 +30,17 @@ source("processing/helpers/specifics.R", encoding = "UTF-8")
 
 # 3. Estimate models -------------------------------------------------------
 
+# Nested models
 models <- c("a1", "a2", "b1", "b2", "c1", "c2", "d1", "d2") # vector with models names
 fits_text <- list(a1, a2, b1, b2, c1, c2, d1, d2)
 fit <- map(fits_text, ~ estimate_riclpm(c(bwcomp, .x, varcovs)))
 
 names(fit) <- models
 
+# Add moderation models
+fit_d2_mod4 <- estimate_riclpm(c(bwcomp, d2_mod4, varcovs), g = "ideol4")
+fit_d2_mod2 <- estimate_riclpm(c(bwcomp, d2_mod2, varcovs), g = "ideol2")
+
 # 4. Save models ----------------------------------------------------------
-rm(list = ls()[!ls() %in% c("fit")])
+rm(list = ls()[!ls() %in% c("fit", "fit_d2_mod4", "fit_d2_mod2")])
 save.image("input/data/fit.RData")

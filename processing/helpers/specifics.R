@@ -190,3 +190,37 @@ cy6 ~ f*cx5 + g*cy5 + h*m0_edad_w01 + i*m0_sexo_w01 + j*m01_w01
 cy7 ~ f*cx6 + g*cy6 + h*m0_edad_w01 + i*m0_sexo_w01 + j*m01_w01
 
 "
+
+d2_mod4 <- "
+
+cx2 ~ c(a1, a2, a3, a4)*cx1 + c(b1, b2, b3, b4)*cy1 + c(c1, c2, c3, c4)*m0_edad_w01 + c(d1, d2, d3, d4)*m0_sexo_w01 + c(e1, e2, e3, e4)*m01_w01
+cx3 ~ c(a1, a2, a3, a4)*cx2 + c(b1, b2, b3, b4)*cy2 + c(c1, c2, c3, c4)*m0_edad_w01 + c(d1, d2, d3, d4)*m0_sexo_w01 + c(e1, e2, e3, e4)*m01_w01
+cx4 ~ c(a1, a2, a3, a4)*cx3 + c(b1, b2, b3, b4)*cy3 + c(c1, c2, c3, c4)*m0_edad_w01 + c(d1, d2, d3, d4)*m0_sexo_w01 + c(e1, e2, e3, e4)*m01_w01
+cx5 ~ c(a1, a2, a3, a4)*cx4 + c(b1, b2, b3, b4)*cy4 + c(c1, c2, c3, c4)*m0_edad_w01 + c(d1, d2, d3, d4)*m0_sexo_w01 + c(e1, e2, e3, e4)*m01_w01
+cx6 ~ c(a1, a2, a3, a4)*cx5 + c(b1, b2, b3, b4)*cy5 + c(c1, c2, c3, c4)*m0_edad_w01 + c(d1, d2, d3, d4)*m0_sexo_w01 + c(e1, e2, e3, e4)*m01_w01
+cx7 ~ c(a1, a2, a3, a4)*cx6 + c(b1, b2, b3, b4)*cy6 + c(c1, c2, c3, c4)*m0_edad_w01 + c(d1, d2, d3, d4)*m0_sexo_w01 + c(e1, e2, e3, e4)*m01_w01
+cy2 ~ c(f1, f2, f3, f4)*cx1 + c(g1, g2, g3, g4)*cy1 + c(h1, h2, h3, h4)*m0_edad_w01 + c(i1, i2, i3, i4)*m0_sexo_w01 + c(j1, j2, j3, j4)*m01_w01
+cy3 ~ c(f1, f2, f3, f4)*cx2 + c(g1, g2, g3, g4)*cy2 + c(h1, h2, h3, h4)*m0_edad_w01 + c(i1, i2, i3, i4)*m0_sexo_w01 + c(j1, j2, j3, j4)*m01_w01
+cy4 ~ c(f1, f2, f3, f4)*cx3 + c(g1, g2, g3, g4)*cy3 + c(h1, h2, h3, h4)*m0_edad_w01 + c(i1, i2, i3, i4)*m0_sexo_w01 + c(j1, j2, j3, j4)*m01_w01
+cy5 ~ c(f1, f2, f3, f4)*cx4 + c(g1, g2, g3, g4)*cy4 + c(h1, h2, h3, h4)*m0_edad_w01 + c(i1, i2, i3, i4)*m0_sexo_w01 + c(j1, j2, j3, j4)*m01_w01
+cy6 ~ c(f1, f2, f3, f4)*cx5 + c(g1, g2, g3, g4)*cy5 + c(h1, h2, h3, h4)*m0_edad_w01 + c(i1, i2, i3, i4)*m0_sexo_w01 + c(j1, j2, j3, j4)*m01_w01
+cy7 ~ c(f1, f2, f3, f4)*cx6 + c(g1, g2, g3, g4)*cy6 + c(h1, h2, h3, h4)*m0_edad_w01 + c(i1, i2, i3, i4)*m0_sexo_w01 + c(j1, j2, j3, j4)*m01_w01
+
+"
+
+d2_mod2 <- "
+
+cx2 ~ c(a1, a2)*cx1 + c(b1, b2)*cy1 + c(c1, c2)*m0_edad_w01 + c(d1, d2)*m0_sexo_w01 + c(e1, e2)*m01_w01
+cx3 ~ c(a1, a2)*cx2 + c(b1, b2)*cy2 + c(c1, c2)*m0_edad_w01 + c(d1, d2)*m0_sexo_w01 + c(e1, e2)*m01_w01
+cx4 ~ c(a1, a2)*cx3 + c(b1, b2)*cy3 + c(c1, c2)*m0_edad_w01 + c(d1, d2)*m0_sexo_w01 + c(e1, e2)*m01_w01
+cx5 ~ c(a1, a2)*cx4 + c(b1, b2)*cy4 + c(c1, c2)*m0_edad_w01 + c(d1, d2)*m0_sexo_w01 + c(e1, e2)*m01_w01
+cx6 ~ c(a1, a2)*cx5 + c(b1, b2)*cy5 + c(c1, c2)*m0_edad_w01 + c(d1, d2)*m0_sexo_w01 + c(e1, e2)*m01_w01
+cx7 ~ c(a1, a2)*cx6 + c(b1, b2)*cy6 + c(c1, c2)*m0_edad_w01 + c(d1, d2)*m0_sexo_w01 + c(e1, e2)*m01_w01
+cy2 ~ c(f1, f2)*cx1 + c(g1, g2)*cy1 + c(h1, h2)*m0_edad_w01 + c(i1, i2)*m0_sexo_w01 + c(j1, j2)*m01_w01
+cy3 ~ c(f1, f2)*cx2 + c(g1, g2)*cy2 + c(h1, h2)*m0_edad_w01 + c(i1, i2)*m0_sexo_w01 + c(j1, j2)*m01_w01
+cy4 ~ c(f1, f2)*cx3 + c(g1, g2)*cy3 + c(h1, h2)*m0_edad_w01 + c(i1, i2)*m0_sexo_w01 + c(j1, j2)*m01_w01
+cy5 ~ c(f1, f2)*cx4 + c(g1, g2)*cy4 + c(h1, h2)*m0_edad_w01 + c(i1, i2)*m0_sexo_w01 + c(j1, j2)*m01_w01
+cy6 ~ c(f1, f2)*cx5 + c(g1, g2)*cy5 + c(h1, h2)*m0_edad_w01 + c(i1, i2)*m0_sexo_w01 + c(j1, j2)*m01_w01
+cy7 ~ c(f1, f2)*cx6 + c(g1, g2)*cy6 + c(h1, h2)*m0_edad_w01 + c(i1, i2)*m0_sexo_w01 + c(j1, j2)*m01_w01
+
+"
