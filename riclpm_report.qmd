@@ -65,9 +65,8 @@ elsoc <- readRDS("input/data/proc_elsoc.RDS")
 
 ```{r}
 # Load functions
-source("processing/func_sint.R")
-source("processing/functions_v2.R")
-source("specifics.R", encoding = "UTF-8")
+source("processing/helpers/functions_v2.R")
+load("input/data/fit.RData")
 ```
 
 # Introduction
@@ -76,15 +75,9 @@ This document contains the main model for RI-CLPM analysis for article about soc
 
 ```{r}
 
-# 7.1 Estimate models ------------
 
-models <- c("a1", "a2", "b1", "b2", "c1", "c2", "d1", "d2") # vector with models names
-fits_text <- list(a1, a2, b1, b2, c1, c2, d1, d2)
-fit <- map(fits_text, ~ estimate_riclpm(c(bwcomp, .x, varcovs)))
 
 # 7.2 Save the GOFs of each model in a list from a for loop. ---------------------
-
-names(fit) <- models
 
 gofdt <- list() # empty list for fit indexes
 
@@ -322,6 +315,63 @@ kable(param_d2_regs,
 ```
 
 At the Table @tbl-w2 estimates of the crosslagged regressions are showed for the constrained models. It is observed that a deviation of one point above the average level of X predicts a deviation of `r round(param_d2$est[param_d2$lhs == "dep4" & param_d1$rhs == "indep3"],3)` in Y during the next measurement, controlling for deviations from the expected score in Y.
+
+## Moderations
+
+### 4 groups
+```{r}
+param_d2_mod4 <- data.table(parameterEstimates(fit_d2_mod4)) %>% mutate(
+    group = case_when(
+        group == 1 ~ "Ninguno",
+        group == 2 ~ "Centro",
+        group == 3 ~ "Izquierda",
+        group == 4 ~ "Derecha"
+    )
+)
+param_d2_mod4_regs <- param_d2_mod4[op == "~", !"label"]
+
+kable(param_d2_mod4_regs,
+    digits = 3,
+    caption = "D2 model interpretations of within components with 4 group moderation"
+) %>%
+    kableExtra::kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+        full_width = T
+    ) %>%
+    row_spec(
+        which(param_d2_mod4_regs$pvalue < 0.05),
+        bold = T,
+        color = "white",
+        background = "#9CE599"
+    )
+
+```
+
+### 2 groups
+```{r}
+param_d2_mod2 <- data.table(parameterEstimates(fit_d2_mod2)) %>% mutate(
+    group = case_when(
+        group == 1 ~ "No se posiciona",
+        group == 2 ~ "Se posiciona"
+    )
+)
+param_d2_mod2_regs <- param_d2_mod2[op == "~", !"label"]
+
+kable(param_d2_mod2_regs,
+    digits = 3,
+    caption = "D2 model interpretations of within components with 2 group moderation"
+) %>%
+    kableExtra::kable_styling(
+        bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+        full_width = T
+    ) %>%
+    row_spec(
+        which(param_d2_mod2_regs$pvalue < 0.05),
+        bold = T,
+        color = "white",
+        background = "#9CE599"
+    )
+```
 
 # Synthesis
 
