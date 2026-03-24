@@ -11,7 +11,9 @@ rm(list = ls())
 
 # 1. Load packages --------------------------------------------------------
 
-if (!require("pacman")) install.packages("pacman") # if pacman es missing, install
+if (!require("pacman")) {
+  install.packages("pacman")
+} # if pacman es missing, install
 
 pacman::p_load(
   tidyverse,
@@ -68,9 +70,12 @@ elsoc <- elsoc_wide_2016_2023 %>%
     -contains("d04")
   ) %>%
   mutate(
-    across(everything(), ~ if_else(. %in% c(-999, -888, -777, -666, -Inf, Inf), NA, .)),
+    across(
+      everything(),
+      ~ if_else(. %in% c(-999, -888, -777, -666, -Inf, Inf), NA, .)
+    ),
     # Create possible moderators
-    ideol4 = case_when(
+    ideol4 = case_when(ß
       c15_w01 %in% c(0:3) ~ 1, # Izquierda
       c15_w01 %in% c(4:6) ~ 2, # Centro
       c15_w01 %in% c(7:10) ~ 3, # Derecho
@@ -83,10 +88,19 @@ elsoc <- elsoc_wide_2016_2023 %>%
     across(c(paste0("c15_w0", rep(1:7))), ~ if_else(. %in% c(11, 12), NA, .))
   )
 
-elsoc <- elsoc %>% mutate(
-  ideol4 = factor(.$ideol4, levels = c(1:4), labels = c("Izquierda", "Centro", "Derecha", "Ninguno")),
-  ideol2 = factor(.$ideol2, levels = c(0, 1), labels = c("No se posiciona", "Se posiciojna"))
-)
+elsoc <- elsoc %>%
+  mutate(
+    ideol4 = factor(
+      .$ideol4,
+      levels = c(1:4),
+      labels = c("Izquierda", "Centro", "Derecha", "Ninguno")
+    ),
+    ideol2 = factor(
+      .$ideol2,
+      levels = c(0, 1),
+      labels = c("No se posiciona", "Se posiciojna")
+    )
+  )
 
 # 4. Save data ------------------------------------------------------------
 
