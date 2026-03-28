@@ -1,81 +1,66 @@
-# 0. Identification -------------------------------------------------------
-
+# *****************************************************************************
+# 0. Identification -----------------------------------------------------------
 # Title: Processing code for a research paper on Justice and violence
 # Institution: Centro de Estudios de Conflicto y Cohesión Social (COES)
 # Responsable: Researcher
-
-# Executive Summary: This script contains the code to create the database needed to elaborate the analyses on Justice and Violence
+# Executive Summary: This script contains the code to create the database
+#  needed to elaborate the analyses on Justice and Violence
 # Date: July 20, 2025
+# *****************************************************************************
 
 rm(list = ls())
 
-# 1. Load packages --------------------------------------------------------
+# 1. Load packages ------------------------------------------------------------
 
 if (!require("pacman")) {
   install.packages("pacman")
 } # if pacman es missing, install
 
+# devtools::install_github("https://github.com/Martin-Venegas-M/martools")
+
 pacman::p_load(
   tidyverse,
   haven,
-  tidylog
+  tidylog,
+  glue,
+  martools
 )
 
-# 2. Load data ------------------------------------------------------------
+# 2. Load data ----------------------------------------------------------------
 
 load(url("https://dataverse.harvard.edu/api/access/datafile/10797986"))
+metadata <- readxl::read_xlsx("input/other/metadata_variables.xlsx")
 
-# 3. Select variables -----------------------------------------------------
+# 3. Quick data wrangling -----------------------------------------------------
 
-elsoc <- elsoc_wide_2016_2023 %>%
-  dplyr::select(
-    idencuesta,
-    tipo_atricion,
-    tipo_caso,
-    starts_with("m0_edad"),
-    starts_with("m0_sexo"),
-    starts_with("m01_"),
-    starts_with("c15"),
-    contains("f05_"),
-    contains("f06_"),
-    contains("t06_01"),
-    contains("t09"),
-    contains("d03_01"),
-    contains("d03_02"),
-    contains("d04_01"),
-    contains("d04_02"),
-    contains("c18_11"),
-    contains("d02_")
-  ) %>%
+elsoc <- elsoc_wide_2016_2023 |>
+  dplyr::select(contains(metadata$variable)) |>
+  # Create percieved and just gaps (independent variables)
   mutate(
-    brecha_perc_w01 = log(d03_01_w01 / d03_02_w01),
-    brecha_perc_w02 = log(d03_01_w01 / d03_02_w02),
-    brecha_perc_w03 = log(d03_01_w01 / d03_02_w03),
-    brecha_perc_w04 = log(d03_01_w01 / d03_02_w04),
-    brecha_perc_w05 = log(d03_01_w01 / d03_02_w05),
-    brecha_perc_w06 = log(d03_01_w01 / d03_02_w06),
-    brecha_perc_w07 = log(d03_01_w01 / d03_02_w07)
-  ) %>%
-  mutate(
-    brecha_just_w01 = log(d04_01_w01 / d04_02_w01),
-    brecha_just_w02 = log(d04_01_w01 / d04_02_w02),
-    brecha_just_w03 = log(d04_01_w01 / d04_02_w03),
-    brecha_just_w04 = log(d04_01_w01 / d04_02_w04),
-    brecha_just_w05 = log(d04_01_w01 / d04_02_w05),
-    brecha_just_w06 = log(d04_01_w01 / d04_02_w06),
-    brecha_just_w07 = log(d04_01_w01 / d04_02_w07)
-  ) %>%
+    across(
+      matches("^d03_02_w"),
+      ~ log(d03_01_w01 / .),
+      .names = "brecha_perc_{str_replace(.col, 'd03_02_', '')}"
+    ),
+    across(
+      matches("^d04_02_w"),
+      ~ log(d04_01_w01 / .),
+      .names = "ßbrecha_just_{str_replace(.col, 'd04_02_', '')}"
+    )
+  ) |>
+  # Delete source variables for gaps variables
   select(
     -contains("d03"),
     -contains("d04")
-  ) %>%
+  ) |>
+  # Recode survey processing codes
   mutate(
     across(
       everything(),
       ~ if_else(. %in% c(-999, -888, -777, -666, -Inf, Inf), NA, .)
     ),
     # Create possible moderators
-    ideol4 = case_when(ß
+    ideol4 = case_when(
       c15_w01 %in% c(0:3) ~ 1, # Izquierda
       c15_w01 %in% c(4:6) ~ 2, # Centro
       c15_w01 %in% c(7:10) ~ 3, # Derecho
@@ -85,23 +70,18 @@ elsoc <- elsoc_wide_2016_2023 %>%
       c15_w01 %in% c(0:10) ~ 1, # Tiene tendencia
       c15_w01 %in% c(11, 12) ~ 0 # No declara tendencia
     ),
-    across(c(paste0("c15_w0", rep(1:7))), ~ if_else(. %in% c(11, 12), NA, .))
-  )
-
-elsoc <- elsoc %>%
-  mutate(
+    across(glue("c15_w0{1:7}"), ~ if_else(. %in% c(11, 12), NA, .)),
     ideol4 = factor(
-      .$ideol4,
+      ideol4,
       levels = c(1:4),
       labels = c("Izquierda", "Centro", "Derecha", "Ninguno")
     ),
     ideol2 = factor(
-      .$ideol2,
+      ideol2,
       levels = c(0, 1),
-      labels = c("No se posiciona", "Se posiciojna")
+      labels = c("No se posiciona", "Se posiciona")
     )
   )
 
-# 4. Save data ------------------------------------------------------------
-
+# 4. Save data ----------------------------------------------------------------
 saveRDS(elsoc, "input/data/proc_elsoc.RDS")
