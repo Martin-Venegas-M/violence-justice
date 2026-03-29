@@ -1,32 +1,75 @@
-# 0. Identification -------------------------------------------------------
-
-# Title: Exploratory analysis code for a research paper on Justice and violence
+# *****************************************************************************
+# 0. Identification -----------------------------------------------------------
+# Title: Exploratory analysis code for a research paper on Justice and
+# violence
 # Institution: Centro de Estudios de Conflicto y Cohesión Social (COES)
 # Responsable: Researcher
-
-# Executive Summary: This script contains the code to create the exploratyory analysis for Justice and Violence article
+# Executive Summary: This script contains the code to create the exploratyory
+#  analysis for Justice and Violence article
 # Date: July 20, 2025
+# *****************************************************************************
 
 rm(list = ls())
 
-# 1. Load packages --------------------------------------------------------
+# 1. Load packages ------------------------------------------------------------
 
-if (!require("pacman")) install.packages("pacman") # if pacman es missing, install
+if (!require("pacman")) {
+  install.packages("pacman")
+} # if pacman es missing, install
 
 pacman::p_load(
   tidyverse,
   haven,
   tidylog,
   lavaan,
-  writexl
+  writexl,
+  martools,
+  rlang
 )
 
-# 2. Load data and functions ----------------------------------------------
+# 2. Load data and functions --------------------------------------------------
 
 elsoc <- readRDS("input/data/proc_elsoc.RDS")
-source("processing/helpers/func_sint.R") # functions for exploratory analysis
 
-# 3. Estimate RICLPM ------------------------------------------------------
+metadata <- readxl::read_xlsx("input/other/metadata_variables.xlsx") |>
+  filter_out(tipo == "Insumo")
+
+source("processing/helpers/functions.R")
+
+# 3. Estimate RICLPM ----------------------------------------------------------
+
+# Create vectors
+vars_x <- metadata |>
+  filter(tipo == "Independiente") |>
+  select(vars_x = variable, waves_x = olas_disponibles)
+
+vars_y <- metadata |>
+  filter(tipo == "Dependiente") |>
+  select(vars_y = variable, waves_y = olas_disponibles)
+
+vars <- expand_grid(vars_x, vars_y) |>
+  mutate(waves_comb = map2_chr(waves_x, waves_y, combine_waves))
+
+# Estimate!
+fits <- pmap(
+  list(
+    x = vars$vars_x,
+    y = vars$vars_y,
+    w = vars$waves_comb
+  ),
+  \(x, y, w) {
+    # Insumos
+    w <- eval_bare(parse_expr(w))
+    controls <- c("m0_edad_w01", "m0_sexo_w01", "m01_w01")
+
+    # Estimación
+    riclpm_text_obj(x, y, w, inv_preds = controls, constrain = TRUE) |>
+      riclpm_estimate()
+  },
+  .progress = TRUE
+)
+
+#! [AQUI VOY PROGRAMANDO]
 
 # Function for estimating multiple dependent variables for one dependent variable
 # ! IMPORTANT: This functions consider two waves paramteres because there are some models to try where the dependent variable is not present in all waves
@@ -57,7 +100,7 @@ fits_d02_01 <- list_fits("d02_01", waves1 = c(1:4)) # ! In this case, the indepe
 fits_d02_02 <- list_fits("d02_02", waves1 = c(1:4)) # ! In this case, the independent variable is only en the firts 4 waves
 fits_d02_03 <- list_fits("d02_03", waves1 = c(1:4)) # ! In this case, the independent variable is only en the firts 4 waves
 
-# 4. Create tabs for RICLPM -----------------------------------------------
+# 4. Create tabs for RICLPM ---------------------------------------------------
 
 vector_vary <- c(paste0("f05_0", rep(1:7)), "t06_01", paste0("t09_0", rep(1:3)))
 
@@ -68,7 +111,7 @@ tab_d02_01 <- bind_rows(map2(.x = fits_d02_01, .y = vector_vary, .f = ~ reg_sig(
 tab_d02_02 <- bind_rows(map2(.x = fits_d02_02, .y = vector_vary, .f = ~ reg_sig(.x, "d02_02", .y)))
 tab_d02_03 <- bind_rows(map2(.x = fits_d02_03, .y = vector_vary, .f = ~ reg_sig(.x, "d02_03", .y)))
 
-# 5. Excel with estimations ----------------------------------------------
+# 5. Excel with estimations ---------------------------------------------------
 
 write_xlsx(list(
   "BRECHA PERCIBIDA" = tab_brecha_perc,
@@ -82,7 +125,7 @@ write_xlsx(list(
 #* REPODUCIBITY NOTE: Currently I'am saving "riclpm_violence_controls_contrained.xlsx" file. The file that I save is linked to the parameters I set in the
 #* estimate_riclpm() functions inside the list_fits() function. If you want to reproduce the other files in the output folder, you have to change these parameters.
 
-# 6. Test specific models ------------------------------------------------
+# 6. Test specific models -----------------------------------------------------
 
 reg_sig(
   estimate_riclpm(text_riclpm_v2("brecha_perc", "f05_04", c(1:7), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
@@ -114,12 +157,12 @@ cor.test(elsoc$brecha_perc_w05, elsoc$c18_11_w05)
 cor.test(elsoc$brecha_perc_w06, elsoc$c18_11_w06)
 cor.test(elsoc$brecha_perc_w07, elsoc$c18_11_w07)
 
-# 7. Test moderations ----------------------------------------------------
+# 7. Test moderations ---------------------------------------------------------
 
 # writeLines(text_riclpm_v2("brecha_perc", "f05_04", c(1:7), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE))
 #* COMMENT: I have to try this manually because to the date, the function doesn't consider constraining by groups.
 
-# 7.1 Moderación con cuatro grupos (brecha_perc) ---------------------------------------
+# 7.1 Moderación con cuatro grupos (brecha_perc) ------------------------------
 text_moderation4 <- "
 
 RI_x =~ 1*brecha_perc_w01 + 1*brecha_perc_w02 + 1*brecha_perc_w03 + 1*brecha_perc_w04 + 1*brecha_perc_w05 + 1*brecha_perc_w06 + 1*brecha_perc_w07
@@ -184,7 +227,7 @@ fit_moderation4 <- estimate_riclpm(text_moderation4, g = "ideol4")
 summary(fit_moderation4, fit.measures = TRUE)
 # ! OJO! Con cuatro grupos se pierde el efecto. Probar otros grupos.
 
-# 7.2 Moderación con dos grupos (brecha_perc) ------------------------------------------
+# 7.2 Moderación con dos grupos (brecha_perc) ---------------------------------
 text_moderation2 <- "
 
 RI_x =~ 1*brecha_perc_w01 + 1*brecha_perc_w02 + 1*brecha_perc_w03 + 1*brecha_perc_w04 + 1*brecha_perc_w05 + 1*brecha_perc_w06 + 1*brecha_perc_w07
@@ -249,7 +292,7 @@ fit_moderation2 <- estimate_riclpm(text_moderation2, g = "ideol2")
 summary(fit_moderation2, fit.measures = TRUE)
 # ! TAMPOCO HAY EFECTO
 
-# 7.3 Moderación con cuatro grupos (c18_11) --------------------------------------------
+# 7.3 Moderación con cuatro grupos (c18_11) -----------------------------------
 text_moderation4_v2 <- "
 
 RI_x =~ 1*c18_11_w01 + 1*c18_11_w02 + 1*c18_11_w03 + 1*c18_11_w04 + 1*c18_11_w05 + 1*c18_11_w06 + 1*c18_11_w07
@@ -314,7 +357,7 @@ fit_moderation4_v2 <- estimate_riclpm(text_moderation4_v2, g = "ideol4")
 summary(fit_moderation4_v2, fit.measures = TRUE)
 # ! HAY EFECTO, PERO EL CFI ESTÁ BAJO EL UMBRAL ACEPTABLE.
 
-# 7.4 Moderación con dos grupos (c18_11) -----------------------------------------------
+# 7.4 Moderación con dos grupos (c18_11) --------------------------------------
 
 writeLines(text_riclpm_v2("c18_11", "f05_04", c(1:7), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE))
 
