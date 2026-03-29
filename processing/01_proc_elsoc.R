@@ -45,7 +45,7 @@ elsoc <- elsoc_wide_2016_2023 |>
     across(
       matches("^d04_02_w"),
       ~ log(d04_01_w01 / .),
-      .names = "ßbrecha_just_{str_replace(.col, 'd04_02_', '')}"
+      .names = "brecha_just_{str_replace(.col, 'd04_02_', '')}"
     )
   ) |>
   # Delete source variables for gaps variables
