@@ -47,88 +47,71 @@ vars_y <- metadata |>
   filter(tipo == "Dependiente") |>
   select(vars_y = variable, waves_y = olas_disponibles)
 
-vars <- expand_grid(vars_x, vars_y) |>
-  mutate(waves_comb = map2_chr(waves_x, waves_y, combine_waves))
+vars <- expand_grid(vars_x, vars_y, constrain = c(TRUE, FALSE)) |>
+  mutate(waves_comb = map2_chr(waves_x, waves_y, combine_waves)) |>
+  arrange(constrain)
+
+labels_fits <- glue::glue(
+  "[{vars$vars_y}]-[{vars$vars_x}]-[{vars$waves_comb}]-[{vars$constrain}]"
+)
 
 # Estimate!
 fits <- pmap(
   list(
     x = vars$vars_x,
     y = vars$vars_y,
-    w = vars$waves_comb
+    w = vars$waves_comb,
+    c = vars$constrain
   ),
-  \(x, y, w) {
+  \(x, y, w, c) {
     # Insumos
     w <- eval_bare(parse_expr(w))
     controls <- c("m0_edad_w01", "m0_sexo_w01", "m01_w01")
 
     # Estimación
-    riclpm_text_obj(x, y, w, inv_preds = controls, constrain = TRUE) |>
+    riclpm_text_obj(x, y, w, inv_preds = controls, constrain = c) |>
       riclpm_estimate()
   },
   .progress = TRUE
-)
-
-#! [AQUI VOY PROGRAMANDO]
-
-# Function for estimating multiple dependent variables for one dependent variable
-# ! IMPORTANT: This functions consider two waves paramteres because there are some models to try where the dependent variable is not present in all waves
-
-list_fits <- function(x, waves1 = c(1:7), waves2 = c(1:4)) {
-  fits <- list(
-    fit1 = estimate_riclpm(text_riclpm_v2(x, "f05_01", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # ! Info not available for w05
-    fit2 = estimate_riclpm(text_riclpm_v2(x, "f05_02", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # ! Info not available for w05
-    fit3 = estimate_riclpm(text_riclpm_v2(x, "f05_03", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
-    fit4 = estimate_riclpm(text_riclpm_v2(x, "f05_04", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
-    fit5 = estimate_riclpm(text_riclpm_v2(x, "f05_05", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # ! Info not available for w05
-    fit6 = estimate_riclpm(text_riclpm_v2(x, "f05_06", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
-    fit7 = estimate_riclpm(text_riclpm_v2(x, "f05_07", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
-    fit8 = estimate_riclpm(text_riclpm_v2(x, "t06_01", waves2, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)), # ! Info not available for w05 and w07
-    fit9 = estimate_riclpm(text_riclpm_v2(x, "t09_01", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
-    fit10 = estimate_riclpm(text_riclpm_v2(x, "t09_02", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
-    fit11 = estimate_riclpm(text_riclpm_v2(x, "t09_03", waves1, inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE))
-  )
-
-  return(fits)
-}
-
-# Estimate models
-fits_brecha_perc <- list_fits("brecha_perc")
-fits_brecha_just <- list_fits("brecha_just")
-fits_c18_11 <- list_fits("c18_11")
-fits_d02_01 <- list_fits("d02_01", waves1 = c(1:4)) # ! In this case, the independent variable is only en the firts 4 waves
-fits_d02_02 <- list_fits("d02_02", waves1 = c(1:4)) # ! In this case, the independent variable is only en the firts 4 waves
-fits_d02_03 <- list_fits("d02_03", waves1 = c(1:4)) # ! In this case, the independent variable is only en the firts 4 waves
+) |>
+  set_names(labels_fits)
 
 # 4. Create tabs for RICLPM ---------------------------------------------------
 
-vector_vary <- c(paste0("f05_0", rep(1:7)), "t06_01", paste0("t09_0", rep(1:3)))
-
-tab_brecha_perc <- bind_rows(map2(.x = fits_brecha_perc, .y = vector_vary, .f = ~ reg_sig(.x, "brecha_perc", .y)))
-tab_brecha_just <- bind_rows(map2(.x = fits_brecha_just, .y = vector_vary, .f = ~ reg_sig(.x, "brecha_just", .y)))
-tab_c18_11 <- bind_rows(map2(.x = fits_c18_11, .y = vector_vary, .f = ~ reg_sig(.x, "c18_11", .y)))
-tab_d02_01 <- bind_rows(map2(.x = fits_d02_01, .y = vector_vary, .f = ~ reg_sig(.x, "d02_01", .y)))
-tab_d02_02 <- bind_rows(map2(.x = fits_d02_02, .y = vector_vary, .f = ~ reg_sig(.x, "d02_02", .y)))
-tab_d02_03 <- bind_rows(map2(.x = fits_d02_03, .y = vector_vary, .f = ~ reg_sig(.x, "d02_03", .y)))
+tabs <- pmap(
+  list(fit = fits, x = vars$vars_x, y = vars$vars_y),
+  \(fit, x, y) riclpm_tab_sig(fit, x, y),
+  .progress = TRUE
+) |>
+  split(vars$vars_x) |>
+  map(bind_rows)
 
 # 5. Excel with estimations ---------------------------------------------------
 
-write_xlsx(list(
-  "BRECHA PERCIBIDA" = tab_brecha_perc,
-  "BRECHA JUSTA" = tab_brecha_just,
-  "TOLERANCIA" = tab_c18_11,
-  "JUSTICIA PENSIONES" = tab_d02_01,
-  "JUSTICIA EDUCACION" = tab_d02_02,
-  "JUSTICIA SALUD" = tab_d02_03
-), "output/riclpm_violencie_justice_controls_constrained.xlsx")
+sheet_names <- c(
+  "brecha_perc" = "BRECHA PERCIBIDA",
+  "brecha_just" = "BRECHA JUSTA",
+  "c18_11" = "TOLERANCIA",
+  "d02_01" = "JUSTICIA PENSIONES",
+  "d02_02" = "JUSTICIA EDUCACION",
+  "d02_03" = "JUSTICIA SALUD"
+)
 
-#* REPODUCIBITY NOTE: Currently I'am saving "riclpm_violence_controls_contrained.xlsx" file. The file that I save is linked to the parameters I set in the
-#* estimate_riclpm() functions inside the list_fits() function. If you want to reproduce the other files in the output folder, you have to change these parameters.
+write_xlsx(
+  set_names(tabs, sheet_names[names(tabs)]),
+  "output/riclpm_violencie_justicexlsx"
+)
 
 # 6. Test specific models -----------------------------------------------------
 
 reg_sig(
-  estimate_riclpm(text_riclpm_v2("brecha_perc", "f05_04", c(1:7), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
+  estimate_riclpm(text_riclpm_v2(
+    "brecha_perc",
+    "f05_04",
+    c(1:7),
+    inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"),
+    constrain = TRUE
+  )),
   "brecha_perc",
   "f05_04"
 ) %>%
@@ -139,7 +122,13 @@ reg_sig(
   View()
 
 reg_sig(
-  estimate_riclpm(text_riclpm_v2("c18_11", "f05_04", c(1:7), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE)),
+  estimate_riclpm(text_riclpm_v2(
+    "c18_11",
+    "f05_04",
+    c(1:7),
+    inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"),
+    constrain = TRUE
+  )),
   "c18_11",
   "f05_04"
 ) %>%
@@ -359,7 +348,13 @@ summary(fit_moderation4_v2, fit.measures = TRUE)
 
 # 7.4 Moderación con dos grupos (c18_11) --------------------------------------
 
-writeLines(text_riclpm_v2("c18_11", "f05_04", c(1:7), inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"), constrain = TRUE))
+writeLines(text_riclpm_v2(
+  "c18_11",
+  "f05_04",
+  c(1:7),
+  inv_preds = c("m0_edad_w01", "m0_sexo_w01", "m01_w01"),
+  constrain = TRUE
+))
 
 
 text_moderation2_v2 <- "
